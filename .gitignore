@@ -5,3 +5,5 @@ livechart/project/target
 livechart/public
 livechart/target
 node_modules
+.bsp
+target
