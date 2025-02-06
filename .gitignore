@@ -1,0 +1,7 @@
+.metals
+livechart/.bsp
+livechart/project/project/target/config-classes
+livechart/project/target
+livechart/public
+livechart/target
+node_modules
