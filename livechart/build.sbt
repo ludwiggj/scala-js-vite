@@ -28,4 +28,9 @@ lazy val livechart = project.in(file("."))
 
     // Depend on Laminar
     libraryDependencies += "com.raquo" %%% "laminar" % "17.2.0",
+
+    // Testing framework
+    libraryDependencies += "org.scalameta" %%% "munit" % "1.0.0" % Test,
+
+    mainClass in Compile := Some("livechart.shopping.LiveChart")
   )
