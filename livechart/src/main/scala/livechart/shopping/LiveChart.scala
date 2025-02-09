@@ -60,30 +60,6 @@ object Main:
 
     def renderDataItem(id: DataItemID, itemSignal: Signal[DataItem]): Element =
         tr(
-            // td(
-            //     input(
-            //         typ := "text",
-            //         value <-- itemSignal.map(_.label),
-            //         // onInput.mapToValue --> { (newLabel: String) =>
-            //         //     dataVar.update { data =>
-            //         //         data.map { item =>
-            //         //           if (item.id == id) then item.copy(label = newLabel) else item    
-            //         //         }
-            //         //     }
-            //         // },
-
-            //         // onInput.mapToValue --> dataVar.updater[String] { (data, newLabel) =>
-            //         //     data.map { item =>
-            //         //         if (item.id == id) then item.copy(label = newLabel) else item    
-            //         //     }
-            //         // }
-
-            //         onInput.mapToValue --> makeDataItemUpdater[String](
-            //             id,
-            //             (item, newLabel) => item.copy(label = newLabel)
-            //         )
-            //     )
-            // ),
             td(
                 inputForString(
                     itemSignal.map(_.label),
