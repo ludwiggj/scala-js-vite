@@ -8,10 +8,6 @@ import com.raquo.laminar.api.L.{*, given}
 import livechart.shopping.Main.renderDataTable
 import livechart.shopping.Main.renderDataItem
 
-// import javascriptLogo from /javascript.svg
-@js.native @JSImport("/javascript.svg", JSImport.Default)
-val javascriptLogo: String = js.native
-
 object Main:
     val model = new Model
     import model.*
@@ -27,9 +23,9 @@ object Main:
         table(
             thead(tr(th("Label"), th("Price"), th("Count"), th("Full Price"), th("Action"))),
             tbody(
-                children <-- dataSignal.map(data => data.map { item =>
-                    renderDataItem(item.id, item)
-                })
+                children <-- dataSignal.split(xxx => xxx.id) {
+                    (id, initial, itemSignal) => renderDataItem(id, itemSignal)
+                }
             ),
             tfoot(
                 tr(
@@ -42,12 +38,12 @@ object Main:
         )
     end renderDataTable
 
-    def renderDataItem(id: DataItemID, item: DataItem): Element =
+    def renderDataItem(id: DataItemID, itemSignal: Signal[DataItem]): Element =
         tr(
-            td(item.label),
-            td("%.3f".format(item.price)),
-            td(item.count),
-            td("%.3f".format(item.fullPrice)),
+            td(child.text <-- itemSignal.map(_.label)),
+            td(child.text <-- itemSignal.map(item =>"%.3f".format(item.price))),
+            td(child.text <-- itemSignal.map(_.count)),
+            td(child.text <-- itemSignal.map(item => "%.3f".format(item.fullPrice))),
             td(button("-", onClick --> (_ => removeDataItem(id)))),
         )
     end renderDataItem
@@ -61,14 +57,3 @@ def LiveChart(): Unit =
     Main.appElement()
   )
 
-def counterButton(): Element =
-    val counter = Var(0)
-    button(
-        tpe := "button",
-        "count is ",
-        child.text <-- counter,
-        onClick --> {
-            event => counter.update(c => c + 1)
-        },
-    )
-end counterButton

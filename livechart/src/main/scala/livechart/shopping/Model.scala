@@ -5,6 +5,12 @@ import com.raquo.laminar.api.L.{*, given}
 
 final class DataItemID
 
+// NOTE - apply(id) method required by split operation
+object DataItemID {
+    def apply(): DataItemID = new DataItemID
+    def apply(id: DataItemID): DataItemID = id
+}
+
 case class DataItem(id: DataItemID, label: String, price: Double, count: Int):
     def fullPrice: Double = price * count
 
