@@ -42,7 +42,14 @@ object Main:
 
     def makeDataItemUpdater[A](id: DataItemID, f: (DataItem, A) => DataItem): Observer[A] =
         dataVar.updater[A] { (data, newValue) =>
-            data.map { item => if (item.id == id) then f(item, newValue) else item }
+            data.map { item =>
+                if
+                    (item.id == id)
+                then
+                    f(item, newValue)
+                else
+                    item 
+            }
         }
     end makeDataItemUpdater
 
@@ -57,6 +64,64 @@ object Main:
         )
     end inputForString
 
+    // Note that the <-- and --> binders connecting strValue with valueSignal and valueUpdater are arguments to the Laminar input element.
+    // This may seem suspicious, as none of them nor their callbacks have any direct relationship to the DOM input element. This is done
+    // to tie the lifetime of the binders to the lifetime of the input element. When the latter gets unmounted, we release the binder
+    // connections, possibly allowing resources to be reclaimed.
+    // In general, every binder must be owned by a Laminar element. It only gets activated when that element is mounted. This prevents
+    // memory leaks.
+    def inputForDouble(valueSignal: Signal[Double], valueUpdater: Observer[Double]): Input =
+        val strValue = Var[String]("")
+        input(
+            typ := "text",
+            value <-- strValue.signal,
+            onInput.mapToValue --> strValue,
+            valueSignal --> strValue.updater[Double] { (prevStr, newValue) =>
+                if
+                    (prevStr.toDoubleOption.contains(newValue))
+                then
+                    prevStr
+                else
+                    "%.3f".format(newValue)
+            },
+            strValue.signal --> { valueStr =>
+                valueStr.toDoubleOption.foreach(valueUpdater.onNext)
+            } 
+        )
+    end inputForDouble
+
+    // def inputForInt(valueSignal: Signal[Int], valueUpdater: Observer[Int]): Input =
+    //     val strValue = Var[String]("")
+    //     input(
+    //         typ := "text",
+    //         value <-- strValue.signal,
+    //         onInput.mapToValue --> strValue,
+    //         valueSignal --> strValue.updater[Int] { (prevStr, newValue) =>
+    //             if
+    //                 (prevStr.toIntOption.contains(newValue))
+    //             then
+    //                 prevStr
+    //             else
+    //                 newValue.toString
+    //         },
+    //         strValue.signal --> { valueStr =>
+    //             valueStr.toIntOption.foreach(valueUpdater.onNext)
+    //         } 
+    //     )
+    // end inputForInt
+
+    def inputForInt(valueSignal: Signal[Int], valueUpdater: Observer[Int]): Input =
+        input(
+            typ := "text",
+            controlled(
+              value <-- valueSignal.map(_.toString),
+              onInput.mapToValue.map(_.toIntOption).collect {
+                case Some(newCount) => newCount
+                case _ => 0
+              } --> valueUpdater
+            )
+        )
+    end inputForInt
 
     def renderDataItem(id: DataItemID, itemSignal: Signal[DataItem]): Element =
         tr(
@@ -66,8 +131,18 @@ object Main:
                     makeDataItemUpdater[String](id, (item, newLabel) => item.copy(label = newLabel))
                 )
             ),
-            td(child.text <-- itemSignal.map(item =>"%.3f".format(item.price))),
-            td(child.text <-- itemSignal.map(_.count)),
+            td(
+                inputForDouble(
+                    itemSignal.map(_.price),
+                    makeDataItemUpdater[Double](id, (item, newPrice) => item.copy(price = newPrice))
+                )
+            ),
+            td(
+                inputForInt(
+                    itemSignal.map(_.count),
+                    makeDataItemUpdater[Int](id, (item, newCount) => item.copy(count = newCount))
+                )
+            ),
             td(child.text <-- itemSignal.map(item => "%.3f".format(item.fullPrice))),
             td(button("-", onClick --> (_ => removeDataItem(id)))),
         )
@@ -76,7 +151,7 @@ object Main:
     def renderDataList(): Element =
         ul(
             children <-- dataSignal.split(_.id) { (id, initial, itemSignal) =>
-                li(child.text <-- itemSignal.map(item => s"${item.count} ${item.label}"))
+                li(child.text <-- itemSignal.map(item => s"${item.label} ${"%.3f".format(item.price)}"))
                 }
 
         )

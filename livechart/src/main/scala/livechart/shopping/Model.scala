@@ -22,7 +22,7 @@ end DataItem
 type DataList = List[DataItem]
 
 final class Model:
-    val dataVar: Var[DataList] = Var(List(DataItem(DataItemID(), "one", 1.0, 1)))
+    val dataVar: Var[DataList] = Var(List(DataItem(DataItemID(), "one", 1.0, 0)))
     val dataSignal = dataVar.signal
 
     def addDataItem(item: DataItem): Unit =
