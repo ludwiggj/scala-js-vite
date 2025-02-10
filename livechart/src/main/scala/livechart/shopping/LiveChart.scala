@@ -9,6 +9,7 @@ import livechart.shopping.Main.renderDataTable
 import livechart.shopping.Main.renderDataItem
 import livechart.shopping.Main.renderDataList
 
+// See https://www.scala-js.org/doc/tutorial/laminar.html
 object Main:
     val model = new Model
     import model.*
@@ -89,26 +90,6 @@ object Main:
             } 
         )
     end inputForDouble
-
-    // def inputForInt(valueSignal: Signal[Int], valueUpdater: Observer[Int]): Input =
-    //     val strValue = Var[String]("")
-    //     input(
-    //         typ := "text",
-    //         value <-- strValue.signal,
-    //         onInput.mapToValue --> strValue,
-    //         valueSignal --> strValue.updater[Int] { (prevStr, newValue) =>
-    //             if
-    //                 (prevStr.toIntOption.contains(newValue))
-    //             then
-    //                 prevStr
-    //             else
-    //                 newValue.toString
-    //         },
-    //         strValue.signal --> { valueStr =>
-    //             valueStr.toIntOption.foreach(valueUpdater.onNext)
-    //         } 
-    //     )
-    // end inputForInt
 
     def inputForInt(valueSignal: Signal[Int], valueUpdater: Observer[Int]): Input =
         input(
