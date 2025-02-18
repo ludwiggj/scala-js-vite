@@ -32,6 +32,9 @@ lazy val livechart = project.in(file("."))
     // Testing framework
     libraryDependencies += "org.scalameta" %%% "munit" % "1.0.0" % Test,
 
-    // mainClass in Compile := Some("livechart.shopping.LiveChart")
-    Compile / mainClass := Some("basic.counter.Count")
+    // Compile / mainClass := Some("basic.HelloWorld")
+    // Compile / mainClass := Some("basic.Count")
+    // Compile / mainClass := Some("basic.counter.Count")
+    // Compile / mainClass := Some("basic.time.Tick")
+    Compile / mainClass := Some("forms.ShowForm")
   )
