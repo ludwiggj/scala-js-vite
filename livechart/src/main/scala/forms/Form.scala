@@ -24,23 +24,22 @@ object Main:
   val app = div(
     form(
       onSubmit
-        .preventDefault
-        .mapTo(stateVar.now()) --> submitter(dom.window.alert),
+        .preventDefault --> (_ => validate(dom.window.alert)),
 
       renderInputRow(_.zipError)(
         label("Zip code: "),
         input(
           placeholder("12345"),
           controlled(
-            value <-- stateVar.signal.map(_.zip),
-            onInput.mapToValue.filter(_.forall(Character.isDigit)) --> zipWriter
+            value <-- stateSignal.map(_.zip),
+            onInput.mapToValue.filter(_.forall(Character.isDigit)) --> model.setZip
           )
         ),
         p(
           button(
             typ("button"), // "submit" is the default in HTML
             "Set SF zip code",
-            onClick.mapTo("94110") --> zipWriter
+            onClick.mapTo("94110") --> model.setZip
           )
         )
       ),
@@ -48,15 +47,15 @@ object Main:
         label("Description: "),
         input(
           controlled(
-            value <-- stateVar.signal.map(_.description),
-            onInput.mapToValue --> descriptionWriter
+            value <-- stateSignal.map(_.description),
+            onInput.mapToValue --> model.setDescription
           )
         ),
         p(
           button(
             typ("button"), // "submit" is the default in HTML
             "Clear",
-            onClick.mapTo("") --> descriptionWriter
+            onClick.mapTo("") --> model.setDescription
           )
         )
       ),
@@ -64,7 +63,7 @@ object Main:
         button(typ("submit"), "Submit")
       ),
       p(
-          text <-- stateVar.signal.map(_.toString())
+          text <-- stateSignal.map(_.toString())
       )
     )
   )
