@@ -13,7 +13,20 @@ object TodoMvcApp:
     //useImport(Stylesheet)
 
     // --- Models ---
+    case class TodoItem(id: Int, text: String, completed: Boolean)
+
+    sealed abstract class Filter(val name: String, val passes: TodoItem => Boolean)
+
+    object ShowAll extends Filter("All", _ => true)
+
+    object ShowActive extends Filter("Active", !_.completed)
+
+    object ShowCompleted extends Filter("Completed", _.completed)
+
+    val filters: List[Filter] = ShowAll :: ShowActive :: ShowCompleted :: Nil
+
     sealed trait Command
+    
     case class Create(itemText: String) extends Command
 
     // --- State ---
@@ -21,19 +34,19 @@ object TodoMvcApp:
     // Var-s are reactive state variables suitable for both local state and redux-like global stores.
     // Laminar uses my library Airstream as its reactive layer https://github.com/raquo/Airstream
 
-    // private val itemsVar = Var(List[TodoItem]())
+    private val itemsVar = Var(List[TodoItem]())
 
-    // private val filterVar = Var[Filter](ShowAll)
+    private val filterVar = Var[Filter](ShowAll)
 
-    // private var lastId = 1 // just for auto-incrementing IDs
+    private var lastId = 0 // just for auto-incrementing IDs
 
     private val commandObserver = Observer[Command] {
       case item@Create(itemText) =>
-        dom.window.alert(s"Create item $item")
-      //   lastId += 1
+        lastId += 1
       //   if (filterVar.now() == ShowCompleted)
       //     filterVar.set(ShowAll)
-      //   itemsVar.update(_ :+ TodoItem(id = lastId, text = itemText, completed = false))
+        itemsVar.update(_ :+ TodoItem(id = lastId, text = itemText, completed = false))
+        dom.window.alert(s"Created item $item\nToDos: ${itemsVar.now()}")
       // case UpdateText(itemId, text) =>
       //   itemsVar.update(_.map(item => if (item.id == itemId) item.copy(text = text) else item))
       // case UpdateCompleted(itemId, completed) =>
@@ -46,10 +59,12 @@ object TodoMvcApp:
 
     // --- Views ---
     lazy val node: HtmlElement = {
-      // val todoItemsSignal = itemsVar
-      //   .signal
-      //   .combineWith(filterVar.signal)
-      //   .mapN(_ filter _.passes)  
+      val todoItemsSignal = itemsVar
+        .signal
+        .combineWith(filterVar.signal)
+        .mapN{
+          case (todos, filter) => todos.filter(todo => filter.passes(todo))
+        }
     
       div(
         cls("todoapp"),
@@ -57,15 +72,17 @@ object TodoMvcApp:
           cls("header"),
           h1("todos"),
           renderNewTodoInput,
-        ) //,
-        //div(
+        ),
+        div(
         //  hideIfNoItems,
-        //  cls("main"),
-        //  ul(
-        //    cls("todo-list"),
-        //    children <-- todoItemsSignal.split(_.id)(renderTodoItem)
-        //  )
-        //),
+          cls("main"),
+          ul(
+            cls("todo-list"),
+            children <-- todoItemsSignal.split(_.id) {
+              (id, todoItem, todoItemSignal) => li(s"id: $id, todo: $todoItem")
+            }
+          )
+        )//,
         //renderStatusBar
       )
     }
