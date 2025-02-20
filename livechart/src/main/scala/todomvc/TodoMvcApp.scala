@@ -3,18 +3,11 @@ package todomvc
 import com.raquo.laminar.api.L.{*, given}
 import org.scalajs.dom
 import org.scalajs.dom.KeyboardEvent
-//import scala.scalajs.js
-//import scala.scalajs.js.annotation.JSImport
 
 // https://laminar.dev/examples/todomvc
 // https://demo.laminar.dev/app/apps/todomvc
 // https://github.com/raquo/laminar-full-stack-demo/blob/master/client/src/main/scala/com/raquo/app/todomvc/TodoMvcApp.scala
 object TodoMvcApp:
-    //@js.native @JSImport("@find/**/TodoMvcApp.css")
-    //private object Stylesheet extends js.Object
-    //def useImport(importedObject: js.Any): Unit = ()
-    //useImport(Stylesheet)
-
     // --- Models ---
     case class TodoItem(id: Int, text: String, completed: Boolean)
 
@@ -108,13 +101,13 @@ object TodoMvcApp:
 
     private def renderStatusBar =
       footerTag(
-        // hideIfNoItems,
+        hideIfNoItems,
         cls("footer"),
         span(
           cls("todo-count"),
           child.text <-- itemsVar.signal
             .map(_.count(!_.completed))
-            .map(pluralize(_, "item left", "items left")),
+            .map(pluralize(_, "item", "items")),
         ),
         ul(
           cls("filters"),
@@ -128,6 +121,12 @@ object TodoMvcApp:
         onClick.preventDefault.mapTo(filter) --> filterVar.writer,
         filter.name
       )
+
+    // Every little thing in Laminar can be abstracted away
+    private def hideIfNoItems: Mod[HtmlElement] =
+      display <-- itemsVar.signal.map { items =>
+        if (items.nonEmpty) "" else "none"
+      }
 
     // --- Generic helpers ---
     private def pluralize(num: Int, singular: String, plural: String): String =
