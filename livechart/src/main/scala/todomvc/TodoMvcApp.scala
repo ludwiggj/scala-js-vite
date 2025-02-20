@@ -11,6 +11,7 @@ object TodoMvcApp:
     // --- Models ---
     case class TodoItem(id: Int, text: String, completed: Boolean)
 
+    // filters
     sealed abstract class Filter(val name: String, val passes: TodoItem => Boolean)
 
     object ShowAll extends Filter("All", _ => true)
@@ -21,9 +22,18 @@ object TodoMvcApp:
 
     val filters: List[Filter] = ShowAll :: ShowActive :: ShowCompleted :: Nil
 
+    // commands
     sealed trait Command
     
     case class Create(itemText: String) extends Command
+
+    case class UpdateText(itemId: Int, text: String) extends Command
+
+    case class UpdateCompleted(itemId: Int, completed: Boolean) extends Command
+
+    case class Delete(itemId: Int) extends Command
+
+    case object DeleteCompleted extends Command
 
     // --- State ---
 
@@ -39,18 +49,19 @@ object TodoMvcApp:
     private val commandObserver = Observer[Command] {
       case item@Create(itemText) =>
         lastId += 1
-      //   if (filterVar.now() == ShowCompleted)
-      //     filterVar.set(ShowAll)
+         if (filterVar.now() == ShowCompleted)
+           filterVar.set(ShowAll)
         itemsVar.update(_ :+ TodoItem(id = lastId, text = itemText, completed = false))
-        dom.window.alert(s"Created item $item\nToDos: ${itemsVar.now()}")
-      // case UpdateText(itemId, text) =>
-      //   itemsVar.update(_.map(item => if (item.id == itemId) item.copy(text = text) else item))
-      // case UpdateCompleted(itemId, completed) =>
-      //   itemsVar.update(_.map(item => if (item.id == itemId) item.copy(completed = completed) else item))
-      // case Delete(itemId) =>
-      //   itemsVar.update(_.filterNot(_.id == itemId))
-      // case DeleteCompleted =>
-      //   itemsVar.update(_.filterNot(_.completed))
+      case UpdateText(itemId, text) =>
+        itemsVar.update(_.map(item => if (item.id == itemId) item.copy(text = text) else item))
+      case UpdateCompleted(itemId, completed) =>
+        itemsVar.update(_.map(item => if (item.id == itemId) item.copy(completed = completed) else item))
+      case Delete(itemId) =>
+        itemsVar.update(_.filterNot(_.id == itemId))
+      case DeleteCompleted =>
+        if (filterVar.now() == ShowCompleted)
+           filterVar.set(ShowAll)
+        itemsVar.update(_.filterNot(_.completed))
     }
 
     // --- Views ---
@@ -70,7 +81,7 @@ object TodoMvcApp:
           renderNewTodoInput,
         ),
         div(
-          // hideIfNoItems,
+          hideIfNoItems,
           cls("main"),
           ul(
             cls("todo-list"),
@@ -95,8 +106,53 @@ object TodoMvcApp:
 
     // Render a single item. Note that the result is a single element: not a stream, not some virtual DOM representation.
     private def renderTodoItem(itemId: Int, initialTodo: TodoItem, itemSignal: Signal[TodoItem]): HtmlElement = {
-      // itemSignal not used yet
-      li(s"id: $itemId, todo: $initialTodo")
+      val isEditingVar = Var(false) // Example of local state
+
+      val updateTextObserver = commandObserver.contramap[UpdateText] { updateCommand =>
+        isEditingVar.set(false)
+        updateCommand
+      }
+
+      li(
+        cls <-- itemSignal.map(item => Map("completed" -> item.completed)),
+        onDblClick.filter(_ => !isEditingVar.now()).mapTo(true) --> isEditingVar.writer,
+        children <-- isEditingVar.signal.map[List[HtmlElement]] {
+          case true =>
+            renderTextUpdateInput(itemId, itemSignal, updateTextObserver) :: Nil
+          case false =>
+            List(
+              renderCheckboxInput(itemId, itemSignal),
+              label(child.text <-- itemSignal.map(_.text)),
+              button(
+                cls("destroy"),
+                onClick.mapTo(Delete(itemId)) --> commandObserver
+              )
+            )
+        }
+      )
+    }
+
+    // Note that we pass reactive variables: `itemSignal` for reading, `updateTextObserver` for writing
+    private def renderTextUpdateInput(
+      itemId: Int,
+      itemSignal: Signal[TodoItem],
+      updateTextObserver: Observer[UpdateText]
+    ) =
+      input(
+        cls("edit"),
+        defaultValue <-- itemSignal.map(_.text),
+        onMountFocus,
+        onEnterPress.mapToValue.map(UpdateText(itemId, _)) --> updateTextObserver,
+        onBlur.mapToValue.map(UpdateText(itemId, _)) --> updateTextObserver
+      )
+
+    private def renderCheckboxInput(itemId: Int, itemSignal: Signal[TodoItem]) = {
+      input(
+        cls("toggle"),
+        typ("checkbox"),
+        checked <-- itemSignal.map(_.completed),
+        onInput.mapToChecked.map(isChecked => UpdateCompleted(itemId, completed = isChecked)) --> commandObserver
+     )
     }
 
     private def renderStatusBar =
@@ -113,6 +169,15 @@ object TodoMvcApp:
           cls("filters"),
           filters.map(filter => li(renderFilterButton(filter)))
         ),
+        child.maybe <-- itemsVar.signal.map { items =>
+          if (items.exists(ShowCompleted.passes)) Some(
+            button(
+              cls("clear-completed"),
+              "Clear completed",
+              onClick.map(_ => DeleteCompleted) --> commandObserver
+            )
+          ) else None
+        }
       )
 
     private def renderFilterButton(filter: Filter) =
