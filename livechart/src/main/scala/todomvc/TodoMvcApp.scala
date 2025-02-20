@@ -74,16 +74,14 @@ object TodoMvcApp:
           renderNewTodoInput,
         ),
         div(
-        //  hideIfNoItems,
+          // hideIfNoItems,
           cls("main"),
           ul(
             cls("todo-list"),
-            children <-- todoItemsSignal.split(_.id) {
-              (id, todoItem, todoItemSignal) => li(s"id: $id, todo: $todoItem")
-            }
+            children <-- todoItemsSignal.split(_.id)(renderTodoItem)
           )
-        )//,
-        //renderStatusBar
+        ),
+        renderStatusBar
       )
     }
 
@@ -99,7 +97,28 @@ object TodoMvcApp:
           .setValue("") --> commandObserver
       )
 
+    // Render a single item. Note that the result is a single element: not a stream, not some virtual DOM representation.
+    private def renderTodoItem(itemId: Int, initialTodo: TodoItem, itemSignal: Signal[TodoItem]): HtmlElement = {
+      // itemSignal not used yet
+      li(s"id: $itemId, todo: $initialTodo")
+    }
+
+    private def renderStatusBar =
+      footerTag(
+        // hideIfNoItems,
+        cls("footer"),
+        span(
+          cls("todo-count"),
+          child.text <-- itemsVar.signal
+            .map(_.count(!_.completed))
+            .map(pluralize(_, "item left", "items left")),
+        )
+      )  
+
     // --- Generic helpers ---
+    private def pluralize(num: Int, singular: String, plural: String): String =
+      s"$num ${if (num == 1) singular else plural}"
+
     private val onEnterPress: EventProcessor[KeyboardEvent, KeyboardEvent] =
       onKeyPress.filter(_.keyCode == dom.KeyCode.Enter)
 
