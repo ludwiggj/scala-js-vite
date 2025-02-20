@@ -6,6 +6,9 @@ import org.scalajs.dom.KeyboardEvent
 //import scala.scalajs.js
 //import scala.scalajs.js.annotation.JSImport
 
+// https://laminar.dev/examples/todomvc
+// https://demo.laminar.dev/app/apps/todomvc
+// https://github.com/raquo/laminar-full-stack-demo/blob/master/client/src/main/scala/com/raquo/app/todomvc/TodoMvcApp.scala
 object TodoMvcApp:
     //@js.native @JSImport("@find/**/TodoMvcApp.css")
     //private object Stylesheet extends js.Object
@@ -112,8 +115,19 @@ object TodoMvcApp:
           child.text <-- itemsVar.signal
             .map(_.count(!_.completed))
             .map(pluralize(_, "item left", "items left")),
-        )
-      )  
+        ),
+        ul(
+          cls("filters"),
+          filters.map(filter => li(renderFilterButton(filter)))
+        ),
+      )
+
+    private def renderFilterButton(filter: Filter) =
+      a(
+        cls("selected") <-- filterVar.signal.map(_ == filter),
+        onClick.preventDefault.mapTo(filter) --> filterVar.writer,
+        filter.name
+      )
 
     // --- Generic helpers ---
     private def pluralize(num: Int, singular: String, plural: String): String =
