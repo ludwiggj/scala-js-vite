@@ -2,9 +2,17 @@ package earthquakes
 
 import com.raquo.laminar.api.L.{*, given}
 import org.scalajs.dom
+import org.scalajs.dom.experimental.Response
+import io.laminext.fetch.*
+import io.laminext.fetch.circe.*
+import io.laminext.syntax.core.*
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.*
 
 object EarthquakeQueryForm:
   val queryResult: Var[String] = Var("")
+
+  val (responsesStream, responseReceived) = EventStream.withCallback[FetchResponse[Seq[Earthquake]]]
 
   val fromDate = input(
     defaultValue("2025-01-01"),
@@ -24,16 +32,14 @@ object EarthquakeQueryForm:
       .setAsValue --> Observer.empty
   )
 
-  def queryForEarthquakes(from: String, to: String): EventStream[String] = {
-    val url = s"https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=$from&endtime=$to&minmagnitude=5&orderby=magnitude&limit=5"
-    FetchStream.get(url)
-  }
-
+  def earthquakeUrl(from: String, to: String): String = 
+    s"https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=$from&endtime=$to&minmagnitude=5&orderby=magnitude&limit=5"
+  
   val app = div(
     form(
       onSubmit
         .preventDefault
-        .flatMap(_ => queryForEarthquakes(fromDate.ref.value, toDate.ref.value)) --> queryResult.writer,
+        .flatMap(_ => Fetch.get(earthquakeUrl(fromDate.ref.value, toDate.ref.value)).decode[Seq[Earthquake]]) --> responseReceived,
       p(
         fromDate,
         label("<-- From")
@@ -48,7 +54,12 @@ object EarthquakeQueryForm:
     ),
     p(
       "Result: ",
-      child.text <-- queryResult
+      child.text <-- responsesStream.recoverToTry.map {
+        case Success(response) =>
+          s"${response.status} ${response.data}"
+        case Failure(exception) =>
+          s"Error ${exception}"
+      }
     )
   )
 

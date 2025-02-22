@@ -29,6 +29,13 @@ lazy val livechart = project.in(file("."))
     // Depend on Laminar
     libraryDependencies += "com.raquo" %%% "laminar" % "17.2.0",
 
+    // Laminext
+    libraryDependencies += "dev.laminext" %%% "fetch" % "0.17.1",
+    libraryDependencies += "dev.laminext" %%% "fetch-circe" % "0.17.1",
+
+    // others
+    libraryDependencies += "io.circe" %%% "circe-core" % "0.14.10",
+
     // Testing framework
     libraryDependencies += "org.scalameta" %%% "munit" % "1.0.0" % Test,
 
@@ -40,5 +47,6 @@ lazy val livechart = project.in(file("."))
     // Compile / mainClass := Some("forms.uncontrolled.ListeningToUserInput")
     // Compile / mainClass := Some("forms.uncontrolled.FormsWithoutVars")
     // Compile / mainClass := Some("todomvc.ToDoMVC")
-    Compile / mainClass := Some("earthquakes.EarthquakeQueries")
+    // Compile / mainClass := Some("earthquakes.EarthquakeQueries")
+    Compile / mainClass := Some("earthquakes.PostItNow")
   )
