@@ -11,6 +11,7 @@ import scala.util.*
 object EarthquakeQueryForm:
   val queryResult: Var[String] = Var("")
   val queryError: Var[String] = Var("")
+  val random:Random = new Random()
 
   val fromDate = input(
     defaultValue("2025-01-01"),
@@ -30,19 +31,28 @@ object EarthquakeQueryForm:
       .setAsValue --> Observer.empty
   )
 
-  def queryForEarthquakes(from: String, to: String): EventStream[Seq[Earthquake]] = {
-    val url = s"https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=$from&endtime=$to&minmagnitude=5&orderby=magnitude&limit=5"
-    FetchStream.get(url).map {
+  def queryForEarthquakes(from: String, to: String): EventStream[Unit] = {
+    val url = if (random.nextBoolean())
+      s"https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=$from&endtime=$to&minmagnitude=5&orderby=magnitude&limit=5"
+    else
+      "https://httpstat.us/random/400-426,428-429,431,440,444,449-451,460,463,494-508,510-511,520-527,530,561"
+    FetchStream.get(
+      url = url,
+      fetchOptions => fetchOptions.headers(("Accept", "application/json"))
+    ).map {
       responseText => {
         // js.Dynamic.global.console.log("Yo")
         // js.Dynamic.global.console.log(responseText)
         parser.parse(responseText).flatMap(_.as[Seq[Earthquake]]) match
           case Left(error) =>
             throw new Exception(s"Response: [$responseText], Error: [$error]")
-          case Right(value) => value
+          case Right(earthquakes) =>
+            queryResult.update(_ => earthquakes.toString())
+            queryError.update(_ => "")
       }        
     }.recover {
       case err: Throwable =>
+        queryResult.update(_ => "")
         queryError.update(_ => err.toString())
         None
     }
@@ -52,7 +62,7 @@ object EarthquakeQueryForm:
     form(
       onSubmit
         .preventDefault
-        .flatMap(_ => queryForEarthquakes(fromDate.ref.value, toDate.ref.value).map(_.toString)) --> queryResult.writer,
+        .flatMap(_ => queryForEarthquakes(fromDate.ref.value, toDate.ref.value)) --> Observer.empty,
       p(
         fromDate,
         label("<-- From")
