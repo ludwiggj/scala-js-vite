@@ -6,9 +6,11 @@ import org.scalajs.dom.experimental.Response
 import io.circe.*
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.*
+// import scala.scalajs.js
 
 object EarthquakeQueryForm:
   val queryResult: Var[String] = Var("")
+  val queryError: Var[String] = Var("")
 
   val fromDate = input(
     defaultValue("2025-01-01"),
@@ -28,25 +30,21 @@ object EarthquakeQueryForm:
       .setAsValue --> Observer.empty
   )
 
-  // https://demo.laminar.dev/app/integrations/network-requests
-  // val responses = clicks.flatMapSwitch { opt =>
-            //    FetchStream.get(url = opt.url, _.abortStream(abortStream))
-            //     .map(resp => if (resp.length >= 1000) resp.substring(0, 1000) else resp)
-            //     .map("Response (first 1000 chars): " + _)
-            //     .recover { case err: Throwable => Some(err.getMessage) }
-            // }
-
-
-  def queryForEarthquakes(from: String, to: String): EventStream[String] = {
+  def queryForEarthquakes(from: String, to: String): EventStream[Seq[Earthquake]] = {
     val url = s"https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=$from&endtime=$to&minmagnitude=5&orderby=magnitude&limit=5"
     FetchStream.get(url).map {
       responseText => {
+        // js.Dynamic.global.console.log("Yo")
+        // js.Dynamic.global.console.log(responseText)
         parser.parse(responseText).flatMap(_.as[Seq[Earthquake]]) match
-          case Left(failure) =>
-             s"${failure.toString} Response: >>>$responseText<<<"
-          case Right(value) =>
-            s"PARSED! => ${value.toString()}"
-      }
+          case Left(error) =>
+            throw new Exception(s"Response: [$responseText], Error: [$error]")
+          case Right(value) => value
+      }        
+    }.recover {
+      case err: Throwable =>
+        queryError.update(_ => err.toString())
+        None
     }
   }
 
@@ -54,7 +52,7 @@ object EarthquakeQueryForm:
     form(
       onSubmit
         .preventDefault
-        .flatMap(_ => queryForEarthquakes(fromDate.ref.value, toDate.ref.value)) --> queryResult.writer,
+        .flatMap(_ => queryForEarthquakes(fromDate.ref.value, toDate.ref.value).map(_.toString)) --> queryResult.writer,
       p(
         fromDate,
         label("<-- From")
@@ -68,8 +66,16 @@ object EarthquakeQueryForm:
       )
     ),
     p(
-      "Result: ",
-      child.text <-- queryResult
+      label("Result:"),
+      p(
+        child.text <-- queryResult
+      )
+    ),
+    p(
+      label("Error: "),
+      p(
+        child.text <-- queryError
+      )
     )
   )
 
