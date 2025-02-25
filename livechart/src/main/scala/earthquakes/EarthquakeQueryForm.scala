@@ -6,14 +6,14 @@ import org.scalajs.dom.experimental.Response
 import io.circe.*
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.*
-// import scala.scalajs.js
 
 object EarthquakeQueryForm:
-  val queryResult: Var[String] = Var("")
-  val queryError: Var[String] = Var("")
-  val random:Random = new Random()
+  private val earthquakesVar: Var[Seq[Earthquake]] = Var(Seq())
+  private val earthquakeSignal: StrictSignal[Seq[Earthquake]] = earthquakesVar.signal 
+  private val errorVar: Var[String] = Var("")
+  private val random:Random = new Random()
 
-  val fromDate = input(
+  private val fromDate = input(
     defaultValue("2025-01-01"),
     maxLength(10), // HTML can help block some undesired input
     onInput
@@ -22,7 +22,7 @@ object EarthquakeQueryForm:
       .setAsValue --> Observer.empty
   )
 
-  val toDate = input(
+  private val toDate = input(
     defaultValue("2025-01-02"),
     maxLength(10), // HTML can help block some undesired input
     onInput
@@ -31,7 +31,7 @@ object EarthquakeQueryForm:
       .setAsValue --> Observer.empty
   )
 
-  def queryForEarthquakes(from: String, to: String): EventStream[Unit] = {
+  private def queryForEarthquakes(from: String, to: String): EventStream[Unit] = {
     val url = if (random.nextBoolean())
       s"https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=$from&endtime=$to&minmagnitude=5&orderby=magnitude&limit=5"
     else
@@ -41,24 +41,46 @@ object EarthquakeQueryForm:
       fetchOptions => fetchOptions.headers(("Accept", "application/json"))
     ).map {
       responseText => {
-        // js.Dynamic.global.console.log("Yo")
-        // js.Dynamic.global.console.log(responseText)
         parser.parse(responseText).flatMap(_.as[Seq[Earthquake]]) match
           case Left(error) =>
             throw new Exception(s"Response: [$responseText], Error: [$error]")
           case Right(earthquakes) =>
-            queryResult.update(_ => earthquakes.toString())
-            queryError.update(_ => "")
+            earthquakesVar.update(_ => earthquakes)
+            errorVar.update(_ => "")
       }        
     }.recover {
       case err: Throwable =>
-        queryResult.update(_ => "")
-        queryError.update(_ => err.toString())
+        earthquakesVar.update(_ => Seq())
+        errorVar.update(_ => err.toString())
         None
     }
   }
 
+  private def hideIfNoItems: Mod[HtmlElement] =
+    display <-- earthquakeSignal.map { items =>
+      if (items.nonEmpty) "" else "none"
+    }
+
+  private def hideIfNoError: Mod[HtmlElement] =
+    display <-- errorVar.signal.map { error =>
+      if (error.nonEmpty) "" else "none"
+    }
+
+  private def renderEarthquake(place: String, initialEarthquake: Earthquake, earthquakeSignal: Signal[Earthquake]): HtmlElement = {
+    tbody(
+      child <-- earthquakeSignal.map {
+        earthquake =>
+          tr(
+            td(border := style.px(1), borderStyle := "solid", earthquake.magnitude.toString()),
+            td(border := style.px(1), borderStyle := "solid", earthquake.time.toString()),
+            td(border := style.px(1), borderStyle := "solid", earthquake.place)
+          )
+      }
+    )
+  }
+
   val app = div(
+    h1("Earthquakes!"),
     form(
       onSubmit
         .preventDefault
@@ -76,15 +98,30 @@ object EarthquakeQueryForm:
       )
     ),
     p(
-      label("Result:"),
+      hideIfNoItems, // Hide table if no results!
+      label(
+        "Result:"
+      ),
       p(
-        child.text <-- queryResult
+        table(
+          border := style.px(5),
+          borderStyle := "solid",
+          thead(
+            tr(
+              th(border := style.px(3), borderStyle := "solid", "Magnitude"),
+              th(border := style.px(3), borderStyle := "solid", "Time"),
+              th(border := style.px(3), borderStyle := "solid", "Place")
+            )
+          ),
+          children <-- earthquakeSignal.split(_.place)(renderEarthquake)
+        )
       )
     ),
     p(
+      hideIfNoError,
       label("Error: "),
       p(
-        child.text <-- queryError
+        child.text <-- errorVar
       )
     )
   )

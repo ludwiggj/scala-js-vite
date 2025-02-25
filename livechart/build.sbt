@@ -29,7 +29,7 @@ lazy val livechart = project.in(file("."))
     // Depend on Laminar
     libraryDependencies += "com.raquo" %%% "laminar" % "17.2.0",
 
-    // others
+    // Circe
     libraryDependencies += "io.circe" %%% "circe-core" % "0.14.10",
     libraryDependencies += "io.circe" %%% "circe-parser"  % "0.14.10",
 
