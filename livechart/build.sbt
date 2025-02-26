@@ -33,6 +33,9 @@ lazy val livechart = project.in(file("."))
     libraryDependencies += "io.circe" %%% "circe-core" % "0.14.10",
     libraryDependencies += "io.circe" %%% "circe-parser"  % "0.14.10",
 
+    // Java time
+    libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % "2.5.0",
+
     // Testing framework
     libraryDependencies += "org.scalameta" %%% "munit" % "1.0.0" % Test,
 

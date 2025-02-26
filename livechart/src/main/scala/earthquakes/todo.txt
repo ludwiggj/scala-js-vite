@@ -1,0 +1,2 @@
+// import scala.scalajs.js
+// js.Dynamic.global.console.log("Yo")
