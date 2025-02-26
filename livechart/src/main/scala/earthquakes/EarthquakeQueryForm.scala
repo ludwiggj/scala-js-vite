@@ -53,44 +53,6 @@ object EarthquakeQueryForm:
     option(value := "9", 9)
   )
 
-  private def queryForEarthquakes(
-    startTime: String,
-    endTime: String,
-    minMagnitude: String,
-    limit: String
-  ): EventStream[Unit] = {
-    val queryForEarthquakes = random.nextBoolean()
-    val url = if (queryForEarthquakes)
-      s"/earthquake-api?format=geojson&starttime=$startTime&endtime=$endTime&minmagnitude=$minMagnitude&orderby=magnitude&limit=$limit"
-    else
-      "https://httpstat.us/random/400-426,428-429,431,440,444,449-451,460,463,494-508,510-511,520-527,530,561"
-    
-    def setError(error: String) =
-      earthquakesVar.update(_ => Seq())
-      errorVar.update(_ => error.toString())
-    
-    FetchStream.get(
-      url = url,
-      fetchOptions => fetchOptions.headers(("Accept", "application/json"))
-    ).map {
-      responseText => {
-        if (queryForEarthquakes)
-          parser.parse(responseText).flatMap(_.as[Seq[Earthquake]]) match
-            case Left(error) =>
-              throw new Exception(s"Response: [$responseText], Error: [$error]")
-            case Right(earthquakes) =>
-              earthquakesVar.update(_ => earthquakes)
-              errorVar.update(_ => "")
-        else
-          setError(responseText)
-      }        
-    }.recover {
-      case err: Throwable =>
-        setError(err.toString())
-        None
-    }
-  }
-
   private def hideIfNoItems: Mod[HtmlElement] =
     display <-- earthquakeSignal.map { items =>
       if (items.nonEmpty) "" else "none"
@@ -126,12 +88,53 @@ object EarthquakeQueryForm:
     )
   }
 
-  val app = div(
+  def queryForEarthquakes(
+    startTime: String,
+    endTime: String,
+    minMagnitude: String,
+    limit: String
+  ): EventStream[Either[String, Seq[Earthquake]]] = {
+    val queryForEarthquakes = random.nextBoolean()
+    val url = if (queryForEarthquakes)
+      s"/earthquake-api?format=geojson&starttime=$startTime&endtime=$endTime&minmagnitude=$minMagnitude&orderby=magnitude&limit=$limit"
+    else
+      "https://httpstat.us/random/400-426,428-429,431,440,444,449-451,460,463,494-508,510-511,520-527,530,561"
+        
+    FetchStream.get(
+      url = url,
+      fetchOptions => fetchOptions.headers(("Accept", "application/json"))
+    ).map {
+      responseText => {
+        if (queryForEarthquakes)
+          parser
+            .parse(responseText)
+            .flatMap(_.as[Seq[Earthquake]])
+            .left.map(error => s"Response: [$responseText], Error: [${error.toString()}]")
+        else
+          Left(responseText)
+      }        
+    }
+    .recover {
+      case err: Throwable =>
+        Some(Left(err.toString()))
+    }
+  }
+
+  def app(
+    queryForEarthquakes: (String, String, String, String) => EventStream[Either[String, Seq[Earthquake]]]
+  ) = div(
     h1("Earthquakes!"),
     form(
       onSubmit
         .preventDefault
-        .flatMap(_ => queryForEarthquakes(fromDate.ref.value, toDate.ref.value, minMagnitude.ref.value, limit.ref.value)) --> Observer.empty,
+        .flatMap(
+          _ => queryForEarthquakes(fromDate.ref.value, toDate.ref.value, minMagnitude.ref.value, limit.ref.value)
+        ) --> Observer[Either[String, Seq[Earthquake]]] {
+            case Right(earthquakes) =>
+              Var.set(earthquakesVar -> earthquakes, errorVar -> "")
+            case Left(error) =>
+              Var.set(earthquakesVar -> Seq.empty, errorVar -> error)
+        },   
       p(
         fromDate,
         label("<-- From", fontFamily := "courier")
@@ -185,7 +188,20 @@ object EarthquakeQueryForm:
 @main
 // This method bootstraps Laminar by installing a Laminar Element in an existing DOM element:
 def EarthquakeQueries(): Unit =
+  def queryForEarthquakesFake(
+    startTime: String,
+    endTime: String,
+    minMagnitude: String,
+    limit: String
+  ): EventStream[Either[String, Seq[Earthquake]]] =
+    EventStream.fromValue(
+      Right(Seq(Earthquake(
+        magnitude = 9, place = "Ipswich, UK", time = Instant.now().toEpochMilli()
+      )))
+    )
+
   renderOnDomContentLoaded(
     dom.document.getElementById("app"),
-    EarthquakeQueryForm.app
+    //EarthquakeQueryForm.app(queryForEarthquakesFake)
+    EarthquakeQueryForm.app(EarthquakeQueryForm.queryForEarthquakes)
   )
