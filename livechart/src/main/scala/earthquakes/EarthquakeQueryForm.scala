@@ -31,27 +31,54 @@ object EarthquakeQueryForm:
       .setAsValue --> Observer.empty
   )
 
-  private def queryForEarthquakes(from: String, to: String): EventStream[Unit] = {
-    val url = if (random.nextBoolean())
-      s"/earthquake-api?format=geojson&starttime=$from&endtime=$to&minmagnitude=5&orderby=magnitude&limit=5"
+  private val limit = select(
+    option(value := "5", 5, selected := true),
+    option(value := "10", 10),
+    option(value := "20", 20),
+  )
+
+  private val minMagnitude = select(
+    option(value := "1", 1),
+    option(value := "3", 3),
+    option(value := "5", 5, selected := true),
+    option(value := "7", 7),
+    option(value := "9", 9)
+  )
+
+  private def queryForEarthquakes(
+    startTime: String,
+    endTime: String,
+    minMagnitude: String,
+    limit: String
+  ): EventStream[Unit] = {
+    val queryForEarthquakes = random.nextBoolean()
+    val url = if (queryForEarthquakes)
+      s"/earthquake-api?format=geojson&starttime=$startTime&endtime=$endTime&minmagnitude=$minMagnitude&orderby=magnitude&limit=$limit"
     else
       "https://httpstat.us/random/400-426,428-429,431,440,444,449-451,460,463,494-508,510-511,520-527,530,561"
+    
+    def setError(error: String) =
+      earthquakesVar.update(_ => Seq())
+      errorVar.update(_ => error.toString())
+    
     FetchStream.get(
       url = url,
       fetchOptions => fetchOptions.headers(("Accept", "application/json"))
     ).map {
       responseText => {
-        parser.parse(responseText).flatMap(_.as[Seq[Earthquake]]) match
-          case Left(error) =>
-            throw new Exception(s"Response: [$responseText], Error: [$error]")
-          case Right(earthquakes) =>
-            earthquakesVar.update(_ => earthquakes)
-            errorVar.update(_ => "")
+        if (queryForEarthquakes)
+          parser.parse(responseText).flatMap(_.as[Seq[Earthquake]]) match
+            case Left(error) =>
+              throw new Exception(s"Response: [$responseText], Error: [$error]")
+            case Right(earthquakes) =>
+              earthquakesVar.update(_ => earthquakes)
+              errorVar.update(_ => "")
+        else
+          setError(responseText)
       }        
     }.recover {
       case err: Throwable =>
-        earthquakesVar.update(_ => Seq())
-        errorVar.update(_ => err.toString())
+        setError(err.toString())
         None
     }
   }
@@ -66,7 +93,11 @@ object EarthquakeQueryForm:
       if (error.nonEmpty) "" else "none"
     }
 
-  private def renderEarthquake(place: String, initialEarthquake: Earthquake, earthquakeSignal: Signal[Earthquake]): HtmlElement = {
+  private def renderEarthquake(
+    place: String,
+    initialEarthquake: Earthquake,
+    earthquakeSignal: Signal[Earthquake]
+  ): HtmlElement = {
     tbody(
       child <-- earthquakeSignal.map {
         earthquake =>
@@ -84,17 +115,25 @@ object EarthquakeQueryForm:
     form(
       onSubmit
         .preventDefault
-        .flatMap(_ => queryForEarthquakes(fromDate.ref.value, toDate.ref.value)) --> Observer.empty,
+        .flatMap(_ => queryForEarthquakes(fromDate.ref.value, toDate.ref.value, minMagnitude.ref.value, limit.ref.value)) --> Observer.empty,
       p(
         fromDate,
-        label("<-- From")
+        label("<-- From", fontFamily := "courier")
       ),
       p(
         toDate,
-        label("<-- To")
+        label("<-- To", fontFamily := "courier")
       ),
       p(
-        button(typ("submit"), "Submit")
+        label("Minimum Magnitude:  ", fontFamily := "courier"),
+        minMagnitude
+      ),
+      p(
+        label("Max No of Results:  ", fontFamily := "courier"),
+        limit
+      ),
+      p(
+        button(typ("submit"), "Submit", fontFamily := "courier")
       )
     ),
     p(
