@@ -33,7 +33,7 @@ object EarthquakeQueryForm:
 
   private def queryForEarthquakes(from: String, to: String): EventStream[Unit] = {
     val url = if (random.nextBoolean())
-      s"https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=$from&endtime=$to&minmagnitude=5&orderby=magnitude&limit=5"
+      s"/earthquake-api?format=geojson&starttime=$from&endtime=$to&minmagnitude=5&orderby=magnitude&limit=5"
     else
       "https://httpstat.us/random/400-426,428-429,431,440,444,449-451,460,463,494-508,510-511,520-527,530,561"
     FetchStream.get(
