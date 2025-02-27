@@ -11,3 +11,6 @@ livechart/.bloop
 livechart/project/.bloop
 livechart/project/project
 livechart/project/metals.sbt
+.bloop
+project/project/metals.sbt
+project/metals.sbt
