@@ -15,10 +15,12 @@ lazy val livechart = project.in(file("."))
      * - emit as few (large) modules as possible for all other classes
      *   (in particular, for the standard library)
      */
-    scalaJSLinkerConfig ~= {
+    // See https://www.scala-js.org/doc/project/module.html
+    Compile / scalaJSLinkerConfig ~= {
       _.withModuleKind(ModuleKind.ESModule)
-        .withModuleSplitStyle(
-          ModuleSplitStyle.SmallModulesFor(List("livechart")))
+      .withModuleSplitStyle(
+        ModuleSplitStyle.SmallModulesFor(List("livechart"))
+      )
     },
 
     /* Depend on the scalajs-dom library.
@@ -47,5 +49,28 @@ lazy val livechart = project.in(file("."))
     // Compile / mainClass := Some("forms.uncontrolled.ListeningToUserInput")
     // Compile / mainClass := Some("forms.uncontrolled.FormsWithoutVars")
     // Compile / mainClass := Some("todomvc.ToDoMVC")
-    Compile / mainClass := Some("earthquakes.EarthquakeQueries")
+    Compile / mainClass := Some("earthquakes.EarthquakeQueries"),
+
+    // The JavaScript environment in which to run and test Scala.js applications.
+    // See https://github.com/scala-js/scala-js-env-jsdom-nodejs
+    // Must run following locally:
+    //   npm install jsdom
+    Test / jsEnv := new org.scalajs.jsenv.jsdomnodejs.JSDOMNodeJSEnv(),
+
+    // Following is required as otherwise get this error:
+    //   [error] org.scalajs.jsenv.UnsupportedInputException: Unsupported input: List(ESModule(...
+    Test / scalaJSLinkerConfig ~= {
+      _.withModuleKind(ModuleKind.NoModule)
+      // This is required to override Compile setting - it's the only valid option for NoModule
+      // See https://javadoc.io/doc/org.scala-js/scalajs-linker-interface_2.12/latest/org/scalajs/linker/interface/ModuleSplitStyle$$FewestModules$.html
+      .withModuleSplitStyle(
+        ModuleSplitStyle.FewestModules
+      )
+    }
+
+    // scalajs-bundler is another option....
+    //   https://github.com/scalacenter/scalajs-bundler
+    //   https://stackoverflow.com/questions/63958419/scalajs-env-jsdom-nodejs-run-fails-with-unsupportedinputexception
+    //   https://stackoverflow.com/questions/64587429/facing-referenceerror-while-running-tests-with-scalajs-bundler
+    //   https://github.com/lolgab/scalajs-vite-example?tab=readme-ov-file
   )

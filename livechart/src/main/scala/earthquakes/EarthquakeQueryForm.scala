@@ -76,10 +76,10 @@ object EarthquakeQueryForm:
     initialEarthquake: Earthquake,
     earthquakeSignal: Signal[Earthquake]
   ): HtmlElement = {
-    tbody(
-      child <-- earthquakeSignal.map {
+    tr(
+      children <-- earthquakeSignal.map {
         earthquake =>
-          tr(
+          Seq(
             td(border := style.px(1), borderStyle := "solid", fontFamily := "courier", earthquake.magnitude.toString()),
             td(border := style.px(1), borderStyle := "solid", fontFamily := "courier", epochTimeToLocalDateTime(earthquake.time)),
             td(border := style.px(1), borderStyle := "solid", fontFamily := "courier", earthquake.place)
@@ -94,8 +94,8 @@ object EarthquakeQueryForm:
     minMagnitude: String,
     limit: String
   ): EventStream[Either[String, Seq[Earthquake]]] = {
-    val queryForEarthquakes = random.nextBoolean()
-    val url = if (queryForEarthquakes)
+    val fetchingEarthquakes = random.nextBoolean()
+    val url = if (fetchingEarthquakes)
       s"/earthquake-api?format=geojson&starttime=$startTime&endtime=$endTime&minmagnitude=$minMagnitude&orderby=magnitude&limit=$limit"
     else
       "https://httpstat.us/random/400-426,428-429,431,440,444,449-451,460,463,494-508,510-511,520-527,530,561"
@@ -105,7 +105,7 @@ object EarthquakeQueryForm:
       fetchOptions => fetchOptions.headers(("Accept", "application/json"))
     ).map {
       responseText => {
-        if (queryForEarthquakes)
+        if (fetchingEarthquakes)
           parser
             .parse(responseText)
             .flatMap(_.as[Seq[Earthquake]])
@@ -120,21 +120,21 @@ object EarthquakeQueryForm:
     }
   }
 
-  def app(
-    queryForEarthquakes: (String, String, String, String) => EventStream[Either[String, Seq[Earthquake]]]
-  ) = div(
+  val formObserver = Observer[Either[String, Seq[Earthquake]]] {
+    case Right(earthquakes) =>
+      Var.set(earthquakesVar -> earthquakes, errorVar -> "")
+    case Left(error) =>
+      Var.set(earthquakesVar -> Seq.empty, errorVar -> error)
+  }
+
+  val app = div(
     h1("Earthquakes!"),
     form(
       onSubmit
         .preventDefault
         .flatMap(
           _ => queryForEarthquakes(fromDate.ref.value, toDate.ref.value, minMagnitude.ref.value, limit.ref.value)
-        ) --> Observer[Either[String, Seq[Earthquake]]] {
-            case Right(earthquakes) =>
-              Var.set(earthquakesVar -> earthquakes, errorVar -> "")
-            case Left(error) =>
-              Var.set(earthquakesVar -> Seq.empty, errorVar -> error)
-        },   
+        ) --> formObserver,
       p(
         fromDate,
         label("<-- From", fontFamily := "courier")
@@ -171,7 +171,9 @@ object EarthquakeQueryForm:
               th(border := style.px(3), borderStyle := "solid", fontFamily := "courier", "Place")
             )
           ),
-          children <-- earthquakeSignal.split(_.place)(renderEarthquake)
+          tbody(
+            children <-- earthquakeSignal.split(_.place)(renderEarthquake)
+          )
         )
       )
     ),
@@ -188,20 +190,7 @@ object EarthquakeQueryForm:
 @main
 // This method bootstraps Laminar by installing a Laminar Element in an existing DOM element:
 def EarthquakeQueries(): Unit =
-  def queryForEarthquakesFake(
-    startTime: String,
-    endTime: String,
-    minMagnitude: String,
-    limit: String
-  ): EventStream[Either[String, Seq[Earthquake]]] =
-    EventStream.fromValue(
-      Right(Seq(Earthquake(
-        magnitude = 9, place = "Ipswich, UK", time = Instant.now().toEpochMilli()
-      )))
-    )
-
   renderOnDomContentLoaded(
     dom.document.getElementById("app"),
-    //EarthquakeQueryForm.app(queryForEarthquakesFake)
-    EarthquakeQueryForm.app(EarthquakeQueryForm.queryForEarthquakes)
+    EarthquakeQueryForm.app
   )
