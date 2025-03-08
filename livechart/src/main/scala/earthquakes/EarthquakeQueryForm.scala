@@ -1,15 +1,13 @@
 package earthquakes
 
 import com.raquo.laminar.api.L.{*, given}
-import org.scalajs.dom
-import org.scalajs.dom.experimental.Response
+import earthquakes.model.Earthquake
 import io.circe.*
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.*
-import java.time.Instant
-import java.time.ZoneOffset
+import org.scalajs.dom
+
+import java.time.{Instant, ZoneOffset}
 import java.time.format.DateTimeFormatter
-import java.time.LocalDateTime
+import scala.util.*
 
 object EarthquakeQueryForm:
   private val earthquakesVar: Var[Seq[Earthquake]] = Var(Seq())

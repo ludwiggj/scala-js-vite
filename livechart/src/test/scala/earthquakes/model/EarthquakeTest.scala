@@ -1,9 +1,11 @@
-package earthquakes
+package earthquakes.model
 
+import earthquakes.model.Earthquake
 import io.circe.*
 import io.circe.syntax.*
+import munit.FunSuite
 
-class EarthquakeTest extends munit.FunSuite:
+class EarthquakeTest extends FunSuite:
     test("increment with initial step") {
         val earthquakeData =
                 s"""

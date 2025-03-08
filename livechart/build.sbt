@@ -38,8 +38,11 @@ lazy val livechart = project.in(file("."))
     // Java time
     libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % "2.5.0",
 
-    // Testing framework
+    // Testing frameworks
     libraryDependencies += "org.scalameta" %%% "munit" % "1.0.0" % Test,
+    libraryDependencies += "com.raquo" %%% "domtestutils" % "18.0.1" % Test,
+    // Scalatest needed for smooth integration with domtestutils
+    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.19" % Test,
 
     // Compile / mainClass := Some("basic.HelloWorld")
     // Compile / mainClass := Some("basic.Count")
