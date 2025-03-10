@@ -7,7 +7,7 @@ import earthquakes.model.Earthquake
 import org.scalajs.dom.document
 
 class EarthquakeQueryFormTest extends MUnitSpec:
-  test("Can get earthquake data") {
+  test("Can display a single earthquake") {
     def tableBody = document.querySelector("tbody")
 
     val containerElement = document.createElement("div")
@@ -24,7 +24,47 @@ class EarthquakeQueryFormTest extends MUnitSpec:
       tbody of sentinel
     )
 
-    EarthquakeQueryForm.formObserver.onNext(
+    EarthquakeQueryForm.model.setResponse(
+      Right(
+        Seq(
+          Earthquake(magnitude = 9, place = "Ipswich, UK", time = 1741379415000L)
+        )
+      )
+    )
+
+    expectNode(
+      tbody of(
+        sentinel,
+        tr of(
+          sentinel,
+          td of "9",
+          td of "07/03/2025 20:30:15",
+          td of "Ipswich, UK"
+        )
+      )
+    )
+
+    unmount
+  }
+
+  test("Can display two earthquakes") {
+    def tableBody = document.querySelector("tbody")
+
+    val containerElement = document.createElement("div")
+    document.body.appendChild(containerElement)
+
+    render(
+      container = containerElement,
+      rootNode = EarthquakeQueryForm.app
+    )
+
+    mount(tableBody)
+
+    expectNode(
+      tbody of sentinel
+    )
+
+    EarthquakeQueryForm.model.setResponse(
       Right(
         Seq(
           Earthquake(magnitude = 9, place = "Ipswich, UK", time = 1741379415000L),
@@ -50,4 +90,6 @@ class EarthquakeQueryFormTest extends MUnitSpec:
         )
       )
     )
+
+    unmount
   }

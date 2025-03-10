@@ -1,7 +1,7 @@
 package earthquakes
 
 import com.raquo.laminar.api.L.{*, given}
-import earthquakes.model.Earthquake
+import earthquakes.model.{Earthquake, EarthquakeModel}
 import io.circe.*
 import org.scalajs.dom
 
@@ -10,10 +10,11 @@ import java.time.format.DateTimeFormatter
 import scala.util.*
 
 object EarthquakeQueryForm:
-  private val earthquakesVar: Var[Seq[Earthquake]] = Var(Seq())
-  private val earthquakeSignal: StrictSignal[Seq[Earthquake]] = earthquakesVar.signal 
-  private val errorVar: Var[String] = Var("")
-  private val random:Random = new Random()
+  val model = new EarthquakeModel
+
+  import model.*
+
+  private val random: Random = new Random()
 
   private val fromDate = input(
     fontFamily := "courier",
@@ -57,7 +58,7 @@ object EarthquakeQueryForm:
     }
 
   private def hideIfNoError: Mod[HtmlElement] =
-    display <-- errorVar.signal.map { error =>
+    display <-- errorSignal.map { error =>
       if (error.nonEmpty) "" else "none"
     }
 
@@ -66,14 +67,14 @@ object EarthquakeQueryForm:
     val utcZone = ZoneOffset.UTC
     val localDateTime = instant.atZone(utcZone).toLocalDateTime()
     val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
-    localDateTime.format(formatter)    
+    localDateTime.format(formatter)
   }
 
   private def renderEarthquake(
-    place: String,
-    initialEarthquake: Earthquake,
-    earthquakeSignal: Signal[Earthquake]
-  ): HtmlElement = {
+                                place: String,
+                                initialEarthquake: Earthquake,
+                                earthquakeSignal: Signal[Earthquake]
+                              ): HtmlElement = {
     tr(
       children <-- earthquakeSignal.map {
         earthquake =>
@@ -87,42 +88,35 @@ object EarthquakeQueryForm:
   }
 
   def queryForEarthquakes(
-    startTime: String,
-    endTime: String,
-    minMagnitude: String,
-    limit: String
-  ): EventStream[Either[String, Seq[Earthquake]]] = {
+                           startTime: String,
+                           endTime: String,
+                           minMagnitude: String,
+                           limit: String
+                         ): EventStream[Either[String, Seq[Earthquake]]] = {
     val fetchingEarthquakes = random.nextBoolean()
     val url = if (fetchingEarthquakes)
       s"/earthquake-api?format=geojson&starttime=$startTime&endtime=$endTime&minmagnitude=$minMagnitude&orderby=magnitude&limit=$limit"
     else
       "https://httpstat.us/random/400-426,428-429,431,440,444,449-451,460,463,494-508,510-511,520-527,530,561"
-        
-    FetchStream.get(
-      url = url,
-      fetchOptions => fetchOptions.headers(("Accept", "application/json"))
-    ).map {
-      responseText => {
-        if (fetchingEarthquakes)
-          parser
-            .parse(responseText)
-            .flatMap(_.as[Seq[Earthquake]])
-            .left.map(error => s"Response: [$responseText], Error: [${error.toString()}]")
-        else
-          Left(responseText)
-      }        
-    }
-    .recover {
-      case err: Throwable =>
-        Some(Left(err.toString()))
-    }
-  }
 
-  val formObserver = Observer[Either[String, Seq[Earthquake]]] {
-    case Right(earthquakes) =>
-      Var.set(earthquakesVar -> earthquakes, errorVar -> "")
-    case Left(error) =>
-      Var.set(earthquakesVar -> Seq.empty, errorVar -> error)
+    FetchStream.get(
+        url = url,
+        fetchOptions => fetchOptions.headers(("Accept", "application/json"))
+      ).map {
+        responseText => {
+          if (fetchingEarthquakes)
+            parser
+              .parse(responseText)
+              .flatMap(_.as[Seq[Earthquake]])
+              .left.map(error => s"Response: [$responseText], Error: [${error.toString()}]")
+          else
+            Left(responseText)
+        }
+      }
+      .recover {
+        case err: Throwable =>
+          Some(Left(err.toString()))
+      }
   }
 
   val app = div(
@@ -132,7 +126,9 @@ object EarthquakeQueryForm:
         .preventDefault
         .flatMap(
           _ => queryForEarthquakes(fromDate.ref.value, toDate.ref.value, minMagnitude.ref.value, limit.ref.value)
-        ) --> formObserver,
+        ) --> Observer[Either[String, Seq[Earthquake]]] {
+        setResponse
+      },
       p(
         fromDate,
         label("<-- From", fontFamily := "courier")
@@ -155,9 +151,7 @@ object EarthquakeQueryForm:
     ),
     p(
       hideIfNoItems, // Hide table if no results!
-      label(
-        "Result:"
-      ),
+      label("Result:", fontFamily := "courier"),
       p(
         table(
           border := style.px(5),
@@ -174,13 +168,14 @@ object EarthquakeQueryForm:
           )
         )
       )
-    ),
+    )
+    ,
     p(
       hideIfNoError,
       label(fontFamily := "courier", "Error: "),
       p(
         fontFamily := "courier",
-        child.text <-- errorVar
+        child.text <-- errorSignal
       )
     )
   )
