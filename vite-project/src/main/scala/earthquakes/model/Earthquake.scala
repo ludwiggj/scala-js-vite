@@ -1,4 +1,4 @@
-package earthquakes
+package earthquakes.model
 
 import io.circe.*
 

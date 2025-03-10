@@ -1,5 +1,0 @@
-{
-  "devDependencies": {
-    "@scala-js/vite-plugin-scalajs": "^1.0.0"
-  }
-}

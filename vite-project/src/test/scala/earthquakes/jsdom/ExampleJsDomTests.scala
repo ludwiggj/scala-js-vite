@@ -1,8 +1,9 @@
-package earthquakes
+package earthquakes.jsdom
 
+import munit.FunSuite
 import org.scalajs.dom.document
 
-class ExampleJsDomTests extends munit.FunSuite {
+class ExampleJsDomTests extends FunSuite {
 
   // See https://github.com/jsdom/jsdom
   test("Example jsdom test") {
@@ -29,7 +30,7 @@ class ExampleJsDomTests extends munit.FunSuite {
     // Find the element by id on the page, and compare the contents
     assertEquals(document.getElementById(id).innerHTML, content)
     // Deliberate failure
-    assertEquals(document.getElementById(id).innerHTML, "Hi there and greetingz!")
+    assertEquals(document.getElementById(id).innerHTML, "Hi there and greetings!")
   }
 
 }

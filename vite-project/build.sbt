@@ -1,6 +1,6 @@
 import org.scalajs.linker.interface.ModuleSplitStyle
 
-lazy val livechart = project.in(file("."))
+lazy val viteProject = project.in(file("."))
   .enablePlugins(ScalaJSPlugin) // Enable the Scala.js plugin in this project
   .settings(
     scalaVersion := "3.3.3",
@@ -38,8 +38,11 @@ lazy val livechart = project.in(file("."))
     // Java time
     libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % "2.5.0",
 
-    // Testing framework
+    // Testing frameworks
     libraryDependencies += "org.scalameta" %%% "munit" % "1.0.0" % Test,
+    libraryDependencies += "com.raquo" %%% "domtestutils" % "18.0.1" % Test,
+    // Scalatest needed for smooth integration with domtestutils
+    libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.19" % Test,
 
     // Compile / mainClass := Some("basic.HelloWorld")
     // Compile / mainClass := Some("basic.Count")

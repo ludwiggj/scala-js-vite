@@ -1,10 +1,11 @@
-package earthquakes
+package earthquakes.jsdom
 
 import com.raquo.laminar.api.L.{*, given}
+import munit.FunSuite
 import org.scalajs.dom
 import org.scalajs.dom.{Element, document}
 
-class BasicJsDomTest extends munit.FunSuite:
+class BasicJsDomTest extends FunSuite:
 
   def displayElement(element: Element, depth: Int): Unit = {
     val buffer = "".padTo(depth, ' ')

@@ -1,20 +1,19 @@
 package earthquakes
 
 import com.raquo.laminar.api.L.{*, given}
-import org.scalajs.dom
-import org.scalajs.dom.experimental.Response
+import com.raquo.laminar.nodes.ReactiveHtmlElement
+import earthquakes.model.*
 import io.circe.*
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.*
-import java.time.Instant
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
-import java.time.LocalDateTime
+import org.scalajs.dom
+import org.scalajs.dom.HTMLDivElement
 
-object EarthquakeQueryForm:
-  private val earthquakesVar: Var[Seq[Earthquake]] = Var(Seq())
-  private val earthquakeSignal: StrictSignal[Seq[Earthquake]] = earthquakesVar.signal 
-  private val errorVar: Var[String] = Var("")
+import java.time.{Instant, ZoneOffset}
+import java.time.format.DateTimeFormatter
+import scala.util.*
+
+class EarthquakeQueryForm:
+  val model = EarthquakeModel()
+  import model.*
   private val random:Random = new Random()
 
   private val fromDate = input(
@@ -59,14 +58,14 @@ object EarthquakeQueryForm:
     }
 
   private def hideIfNoError: Mod[HtmlElement] =
-    display <-- errorVar.signal.map { error =>
+    display <-- errorSignal.map { error =>
       if (error.nonEmpty) "" else "none"
     }
 
   private def epochTimeToLocalDateTime(epochTimeMillis: Long): String = {
     val instant = Instant.ofEpochMilli(epochTimeMillis)
     val utcZone = ZoneOffset.UTC
-    val localDateTime = instant.atZone(utcZone).toLocalDateTime()
+    val localDateTime = instant.atZone(utcZone).toLocalDateTime
     val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")
     localDateTime.format(formatter)    
   }
@@ -88,7 +87,7 @@ object EarthquakeQueryForm:
     )
   }
 
-  def queryForEarthquakes(
+  private def queryForEarthquakes(
     startTime: String,
     endTime: String,
     minMagnitude: String,
@@ -109,25 +108,22 @@ object EarthquakeQueryForm:
           parser
             .parse(responseText)
             .flatMap(_.as[Seq[Earthquake]])
-            .left.map(error => s"Response: [$responseText], Error: [${error.toString()}]")
+            .left.map(error => s"Response: [$responseText], Error: [${error.toString}]")
         else
           Left(responseText)
       }        
     }
     .recover {
       case err: Throwable =>
-        Some(Left(err.toString()))
+        Some(Left(err.toString))
     }
   }
 
-  val formObserver = Observer[Either[String, Seq[Earthquake]]] {
-    case Right(earthquakes) =>
-      Var.set(earthquakesVar -> earthquakes, errorVar -> "")
-    case Left(error) =>
-      Var.set(earthquakesVar -> Seq.empty, errorVar -> error)
+  private val formObserver = Observer[Either[String, Seq[Earthquake]]] {
+      model.setResponse
   }
 
-  val app = div(
+  val app: ReactiveHtmlElement[HTMLDivElement] = div(
     h1("Earthquakes!"),
     form(
       onSubmit
@@ -157,9 +153,7 @@ object EarthquakeQueryForm:
     ),
     p(
       hideIfNoItems, // Hide table if no results!
-      label(
-        "Result:"
-      ),
+      label("Result:", fontFamily := "courier"),
       p(
         table(
           border := style.px(5),
@@ -182,7 +176,7 @@ object EarthquakeQueryForm:
       label(fontFamily := "courier", "Error: "),
       p(
         fontFamily := "courier",
-        child.text <-- errorVar
+        child.text <-- errorSignal
       )
     )
   )
@@ -192,5 +186,5 @@ object EarthquakeQueryForm:
 def EarthquakeQueries(): Unit =
   renderOnDomContentLoaded(
     dom.document.getElementById("app"),
-    EarthquakeQueryForm.app
+    EarthquakeQueryForm().app
   )
