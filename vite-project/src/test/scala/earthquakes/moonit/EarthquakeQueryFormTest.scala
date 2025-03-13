@@ -7,7 +7,6 @@ import earthquakes.Utils.*
 import earthquakes.model.Earthquake
 import org.scalajs.dom.document
 
-// TODO - do this as a PR?
 class EarthquakeQueryFormTest extends MUnitSpec:
   test("Can display one earthquake") {
     displayElement(document.body)

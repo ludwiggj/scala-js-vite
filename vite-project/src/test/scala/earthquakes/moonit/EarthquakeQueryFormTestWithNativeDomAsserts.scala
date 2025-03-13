@@ -1,12 +1,13 @@
 package earthquakes.moonit
 
+import com.raquo.domtestutils.MUnitSpec
 import com.raquo.laminar.api.L.*
 import earthquakes.EarthquakeQueryForm
 import earthquakes.Utils.*
 import earthquakes.model.Earthquake
 import org.scalajs.dom.document
 
-class EarthquakeQueryFormTestWithNativeDomAsserts extends munit.FunSuite:
+class EarthquakeQueryFormTestWithNativeDomAsserts extends MUnitSpec:
   test("Can display one earthquake") {
     displayElement(document.body)
 
@@ -21,17 +22,17 @@ class EarthquakeQueryFormTestWithNativeDomAsserts extends munit.FunSuite:
     )
 
     val tableBody = document.querySelector("tbody")
-    assert(tableBody.children.length == 0)
+    tableBody.children.length shouldBe 0
 
     simulateResponse(
       earthquakeQueryForm,
       Right(Seq(Earthquake(magnitude = 9, place = "Ipswich, UK", time = 1741379415000L)))
     )
 
-    assert(tableBody.children.length == 1)
-    assert(tableBody.children(0).children(0).textContent == "9")
-    assert(tableBody.children(0).children(1).textContent == "07/03/2025 20:30:15")
-    assert(tableBody.children(0).children(2).textContent == "Ipswich, UK")
+    tableBody.children.length shouldBe 1
+    tableBody.children(0).children(0).textContent shouldBe "9"
+    tableBody.children(0).children(1).textContent shouldBe "07/03/2025 20:30:15"
+    tableBody.children(0).children(2).textContent shouldBe "Ipswich, UK"
 
     displayElement(document.body)
 
@@ -55,7 +56,7 @@ class EarthquakeQueryFormTestWithNativeDomAsserts extends munit.FunSuite:
     )
 
     val tableBody = document.querySelector("tbody")
-    assert(tableBody.children.length == 0)
+    tableBody.children.length shouldBe 0
 
     simulateResponse(
       earthquakeQueryForm,
@@ -65,13 +66,13 @@ class EarthquakeQueryFormTestWithNativeDomAsserts extends munit.FunSuite:
       ))
     )
 
-    assert(tableBody.children.length == 2)
-    assert(tableBody.children(0).children(0).textContent == "9")
-    assert(tableBody.children(0).children(1).textContent == "07/03/2025 20:30:15")
-    assert(tableBody.children(0).children(2).textContent == "Ipswich, UK")
-    assert(tableBody.children(1).children(0).textContent == "8.7")
-    assert(tableBody.children(1).children(1).textContent == "25/12/2021 12:00:57")
-    assert(tableBody.children(1).children(2).textContent == "Norwich, UK")
+    tableBody.children.length shouldBe 2
+    tableBody.children(0).children(0).textContent shouldBe "9"
+    tableBody.children(0).children(1).textContent shouldBe "07/03/2025 20:30:15"
+    tableBody.children(0).children(2).textContent shouldBe "Ipswich, UK"
+    tableBody.children(1).children(0).textContent shouldBe "8.7"
+    tableBody.children(1).children(1).textContent shouldBe "25/12/2021 12:00:57"
+    tableBody.children(1).children(2).textContent shouldBe "Norwich, UK"
 
     displayElement(document.body)
 
@@ -95,17 +96,17 @@ class EarthquakeQueryFormTestWithNativeDomAsserts extends munit.FunSuite:
     )
 
     val tableBody = document.querySelector("tbody")
-    assert(tableBody.children.length == 0)
+    tableBody.children.length shouldBe 0
 
     simulateResponse(
       earthquakeQueryForm,
       Right(Seq(Earthquake(magnitude = 9, place = "Ipswich, UK", time = 1741379415000L)))
     )
 
-    assert(tableBody.children.length == 1)
-    assert(tableBody.children(0).children(0).textContent == "9")
-    assert(tableBody.children(0).children(1).textContent == "07/03/2025 20:30:15")
-    assert(tableBody.children(0).children(2).textContent == "Ipswich, UK")
+    tableBody.children.length shouldBe 1
+    tableBody.children(0).children(0).textContent shouldBe "9"
+    tableBody.children(0).children(1).textContent shouldBe "07/03/2025 20:30:15"
+    tableBody.children(0).children(2).textContent shouldBe "Ipswich, UK"
 
     displayElement(document.body)
 
@@ -117,13 +118,13 @@ class EarthquakeQueryFormTestWithNativeDomAsserts extends munit.FunSuite:
       ))
     )
 
-    assert(tableBody.children.length == 2)
-    assert(tableBody.children(0).children(0).textContent == "9")
-    assert(tableBody.children(0).children(1).textContent == "07/03/2025 20:30:15")
-    assert(tableBody.children(0).children(2).textContent == "Ipswich, UK")
-    assert(tableBody.children(1).children(0).textContent == "8.7")
-    assert(tableBody.children(1).children(1).textContent == "25/12/2021 12:00:57")
-    assert(tableBody.children(1).children(2).textContent == "Norwich, UK")
+    tableBody.children.length shouldBe 2
+    tableBody.children(0).children(0).textContent shouldBe "9"
+    tableBody.children(0).children(1).textContent shouldBe "07/03/2025 20:30:15"
+    tableBody.children(0).children(2).textContent shouldBe "Ipswich, UK"
+    tableBody.children(1).children(0).textContent shouldBe "8.7"
+    tableBody.children(1).children(1).textContent shouldBe "25/12/2021 12:00:57"
+    tableBody.children(1).children(2).textContent shouldBe "Norwich, UK"
 
     displayElement(document.body)
 

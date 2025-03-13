@@ -69,7 +69,13 @@ lazy val viteProject = project.in(file("."))
       .withModuleSplitStyle(
         ModuleSplitStyle.FewestModules
       )
-    }
+    },
+
+    // See https://docs.scala-lang.org/overviews/compiler-options/#use-compiler-options-with-sbt
+    scalacOptions ++= Seq(
+      "-feature",
+      "-language:implicitConversions", // exploit "trailing comma" syntax so you can add an option without editing this line
+    )
 
     // scalajs-bundler is another option....
     //   https://github.com/scalacenter/scalajs-bundler
