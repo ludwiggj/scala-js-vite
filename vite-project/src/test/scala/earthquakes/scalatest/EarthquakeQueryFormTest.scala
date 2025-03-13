@@ -1,6 +1,6 @@
 package earthquakes.scalatest
 
-import com.raquo.domtestutils.*
+import com.raquo.domtestutils.scalatest.ScalaTestSpec
 import com.raquo.laminar.api.L.*
 import earthquakes.EarthquakeQueryForm
 import earthquakes.Utils.*

@@ -1,6 +1,7 @@
 package earthquakes.moonit
 
-import com.raquo.domtestutils.MUnitSpec
+import com.raquo.deprecateddomtestutils.MUtzSpec
+import com.raquo.domtestutils.moonit.MUnitSpec
 import com.raquo.laminar.api.L.*
 import earthquakes.EarthquakeQueryForm
 import earthquakes.Utils.*

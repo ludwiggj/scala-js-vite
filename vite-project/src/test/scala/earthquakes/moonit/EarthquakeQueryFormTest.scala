@@ -1,6 +1,6 @@
 package earthquakes.moonit
 
-import com.raquo.domtestutils.*
+import com.raquo.domtestutils.moonit.MUnitSpec
 import com.raquo.laminar.api.L.*
 import earthquakes.EarthquakeQueryForm
 import earthquakes.Utils.*
@@ -23,7 +23,7 @@ class EarthquakeQueryFormTest extends MUnitSpec:
 
     expectNode(
       tableBody,
-      tbody of sentinel
+      makeTagTestable(tbody) of sentinel
     )
 
     simulateResponse(

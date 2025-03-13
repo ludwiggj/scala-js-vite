@@ -40,7 +40,7 @@ lazy val viteProject = project.in(file("."))
 
     // Testing frameworks
     libraryDependencies += "org.scalameta" %%% "munit" % "1.0.0" % Test,
-    libraryDependencies += "com.raquo" %%% "domtestutils" % "18.0.1" % Test,
+    libraryDependencies += "com.ludwiggj" %%% "domtestutilz" % "18.1.0-SNAPSHOT" % Test,
     // Scalatest needed for smooth integration with domtestutils
     libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.19" % Test,
 

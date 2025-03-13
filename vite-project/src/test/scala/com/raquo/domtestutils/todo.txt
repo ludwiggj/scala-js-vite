@@ -1,2 +1,0 @@
-// TODO - Fork repo and move code from this package into it
-// TODO - Could also copy in test com.raquo.laminar.tests.SplitVarSpec from Laminar to show things working
