@@ -1,5 +1,6 @@
 package earthquakes
 
+import earthquakes.model.Earthquake
 import org.scalajs.dom.Element
 
 object Utils:
@@ -17,3 +18,6 @@ object Utils:
     loop(element)
     println("<<<<<")
   }
+
+  def simulateResponse(form: EarthquakeQueryForm, response: Either[String, Seq[Earthquake]]): Unit =
+    form.model.setResponse(response)

@@ -1,6 +1,5 @@
 package forms
 
-import forms.Model
 import forms.FormState.zipErrorMsg
 import forms.FormState.descriptionErrorMsg
 

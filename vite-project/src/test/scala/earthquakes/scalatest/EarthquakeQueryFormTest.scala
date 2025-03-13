@@ -3,7 +3,7 @@ package earthquakes.scalatest
 import com.raquo.domtestutils.*
 import com.raquo.laminar.api.L.*
 import earthquakes.EarthquakeQueryForm
-import earthquakes.Utils.displayElement
+import earthquakes.Utils.*
 import earthquakes.model.Earthquake
 import org.scalajs.dom.document
 
@@ -164,5 +164,30 @@ class EarthquakeQueryFormTest extends ScalaTestSpec:
           td of "Norwich, UK"
         )
       )
+    )
+  }
+
+  it("Can display an error") {
+    val containerElement = document.querySelector("div")
+
+    val earthquakeQueryForm = EarthquakeQueryForm()
+
+    render(
+      container = containerElement,
+      rootNode = earthquakeQueryForm.app
+    )
+
+    val errorMessage = "No earthquakes today!"
+
+    simulateResponse(
+      earthquakeQueryForm,
+      Left(errorMessage)
+    )
+
+    displayElement(document.body)
+
+    expectNode(
+      document.getElementsByClassName("error")(0),
+      p of errorMessage
     )
   }

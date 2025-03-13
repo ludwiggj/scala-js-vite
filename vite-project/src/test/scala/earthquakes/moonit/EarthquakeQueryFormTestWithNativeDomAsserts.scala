@@ -2,14 +2,11 @@ package earthquakes.moonit
 
 import com.raquo.laminar.api.L.*
 import earthquakes.EarthquakeQueryForm
-import earthquakes.Utils.displayElement
+import earthquakes.Utils.*
 import earthquakes.model.Earthquake
 import org.scalajs.dom.document
 
 class EarthquakeQueryFormTestWithNativeDomAsserts extends munit.FunSuite:
-  private def simulateEarthquakes(form: EarthquakeQueryForm, earthquakes: Seq[Earthquake]): Unit =
-    form.model.setResponse(Right(earthquakes))
-
   test("Can display one earthquake") {
     displayElement(document.body)
 
@@ -26,9 +23,9 @@ class EarthquakeQueryFormTestWithNativeDomAsserts extends munit.FunSuite:
     val tableBody = document.querySelector("tbody")
     assert(tableBody.children.length == 0)
 
-    simulateEarthquakes(
+    simulateResponse(
       earthquakeQueryForm,
-      Seq(Earthquake(magnitude = 9, place = "Ipswich, UK", time = 1741379415000L))
+      Right(Seq(Earthquake(magnitude = 9, place = "Ipswich, UK", time = 1741379415000L)))
     )
 
     assert(tableBody.children.length == 1)
@@ -60,12 +57,12 @@ class EarthquakeQueryFormTestWithNativeDomAsserts extends munit.FunSuite:
     val tableBody = document.querySelector("tbody")
     assert(tableBody.children.length == 0)
 
-    simulateEarthquakes(
+    simulateResponse(
       earthquakeQueryForm,
-      Seq(
+      Right(Seq(
         Earthquake(magnitude = 9, place = "Ipswich, UK", time = 1741379415000L),
         Earthquake(magnitude = 8.7, place = "Norwich, UK", time = 1640433657000L)
-      )
+      ))
     )
 
     assert(tableBody.children.length == 2)
@@ -100,9 +97,9 @@ class EarthquakeQueryFormTestWithNativeDomAsserts extends munit.FunSuite:
     val tableBody = document.querySelector("tbody")
     assert(tableBody.children.length == 0)
 
-    simulateEarthquakes(
+    simulateResponse(
       earthquakeQueryForm,
-      Seq(Earthquake(magnitude = 9, place = "Ipswich, UK", time = 1741379415000L))
+      Right(Seq(Earthquake(magnitude = 9, place = "Ipswich, UK", time = 1741379415000L)))
     )
 
     assert(tableBody.children.length == 1)
@@ -112,12 +109,12 @@ class EarthquakeQueryFormTestWithNativeDomAsserts extends munit.FunSuite:
 
     displayElement(document.body)
 
-    simulateEarthquakes(
+    simulateResponse(
       earthquakeQueryForm,
-      Seq(
+      Right(Seq(
         Earthquake(magnitude = 9, place = "Ipswich, UK", time = 1741379415000L),
         Earthquake(magnitude = 8.7, place = "Norwich, UK", time = 1640433657000L)
-      )
+      ))
     )
 
     assert(tableBody.children.length == 2)

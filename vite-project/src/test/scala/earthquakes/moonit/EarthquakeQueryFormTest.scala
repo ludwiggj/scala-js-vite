@@ -3,19 +3,12 @@ package earthquakes.moonit
 import com.raquo.domtestutils.*
 import com.raquo.laminar.api.L.*
 import earthquakes.EarthquakeQueryForm
-import earthquakes.Utils.displayElement
+import earthquakes.Utils.*
 import earthquakes.model.Earthquake
 import org.scalajs.dom.document
 
-// TODO - Could also copy in following test from Laminar to show things working:
-//          com.raquo.laminar.tests.SplitVarSpec
 // TODO - do this as a PR?
-//        Add test for a Left response
-
 class EarthquakeQueryFormTest extends MUnitSpec:
-  private def simulateEarthquakes(form: EarthquakeQueryForm, earthquakes: Seq[Earthquake]): Unit =
-    form.model.setResponse(Right(earthquakes))
-
   test("Can display one earthquake") {
     displayElement(document.body)
 
@@ -34,9 +27,9 @@ class EarthquakeQueryFormTest extends MUnitSpec:
       tbody of sentinel
     )
 
-    simulateEarthquakes(
+    simulateResponse(
       earthquakeQueryForm,
-      Seq(Earthquake(magnitude = 9, place = "Ipswich, UK", time = 1741379415000L))
+      Right(Seq(Earthquake(magnitude = 9, place = "Ipswich, UK", time = 1741379415000L)))
     )
 
     displayElement(document.body)
@@ -74,12 +67,12 @@ class EarthquakeQueryFormTest extends MUnitSpec:
       tbody of sentinel
     )
 
-    simulateEarthquakes(
+    simulateResponse(
       earthquakeQueryForm,
-      Seq(
+      Right(Seq(
         Earthquake(magnitude = 9, place = "Ipswich, UK", time = 1741379415000L),
         Earthquake(magnitude = 8.7, place = "Norwich, UK", time = 1640433657000L)
-      )
+      ))
     )
 
     displayElement(document.body)
@@ -122,9 +115,9 @@ class EarthquakeQueryFormTest extends MUnitSpec:
       tbody of sentinel
     )
 
-    simulateEarthquakes(
+    simulateResponse(
       earthquakeQueryForm,
-      Seq(Earthquake(magnitude = 9, place = "Ipswich, UK", time = 1741379415000L))
+      Right(Seq(Earthquake(magnitude = 9, place = "Ipswich, UK", time = 1741379415000L)))
     )
 
     displayElement(document.body)
@@ -142,12 +135,12 @@ class EarthquakeQueryFormTest extends MUnitSpec:
       )
     )
 
-    simulateEarthquakes(
+    simulateResponse(
       earthquakeQueryForm,
-      Seq(
+      Right(Seq(
         Earthquake(magnitude = 9, place = "Ipswich, UK", time = 1741379415000L),
         Earthquake(magnitude = 8.7, place = "Norwich, UK", time = 1640433657000L)
-      )
+      ))
     )
 
     displayElement(document.body)
@@ -169,5 +162,30 @@ class EarthquakeQueryFormTest extends MUnitSpec:
           td of "Norwich, UK"
         )
       )
+    )
+  }
+
+  test("Can display an error") {
+    val containerElement = document.querySelector("div")
+
+    val earthquakeQueryForm = EarthquakeQueryForm()
+
+    render(
+      container = containerElement,
+      rootNode = earthquakeQueryForm.app
+    )
+
+    val errorMessage = "No earthquakes today!"
+
+    simulateResponse(
+      earthquakeQueryForm,
+      Left(errorMessage)
+    )
+
+    displayElement(document.body)
+
+    expectNode(
+      document.getElementsByClassName("error")(0),
+      p of errorMessage
     )
   }

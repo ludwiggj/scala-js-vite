@@ -175,6 +175,7 @@ class EarthquakeQueryForm:
       hideIfNoError,
       label(fontFamily := "courier", "Error: "),
       p(
+        cls("error"),
         fontFamily := "courier",
         child.text <-- errorSignal
       )
