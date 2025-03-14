@@ -14,3 +14,4 @@ livechart/project/metals.sbt
 .bloop
 project/project/metals.sbt
 project/metals.sbt
+.idea
