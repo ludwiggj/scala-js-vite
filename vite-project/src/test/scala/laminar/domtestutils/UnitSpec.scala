@@ -1,6 +1,6 @@
-package com.raquo.domtestutils
+package laminar.domtestutils
 
-import com.raquo.domtestutils.matching.*
+import com.raquo.domtestutils.matching.{ExpectedNode, RuleImplicits, TestableHtmlAttr, TestableProp, TestableStyleProp, TestableSvgAttr}
 import com.raquo.laminar.keys.{HtmlAttr, HtmlProp, StyleProp, SvgAttr}
 import com.raquo.laminar.nodes.CommentNode
 import com.raquo.laminar.tags.Tag
@@ -28,11 +28,10 @@ trait UnitSpec extends RuleImplicits[Tag.Base, CommentNode, HtmlProp, HtmlAttr, 
     new TestableStyleProp[V](style.name)
   }
 
-  // Changed last parameter from `svgAttr.namespace` to None to remove infinite loop warning ¯\_(ツ)_/¯
   override implicit def makeSvgAttrTestable[V](svgAttr: SvgAttr[V]): TestableSvgAttr[V] = {
     new TestableSvgAttr[V](svgAttr.name, svgAttr.codec.encode, svgAttr.codec.decode, None)
   }
 
-  // Taken from LaminarSpec
+  // As per LaminarSpec
   val sentinel: ExpectedNode = ExpectedNode.comment
 }

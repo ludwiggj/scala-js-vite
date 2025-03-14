@@ -1,10 +1,10 @@
-package earthquakes.moonit
+package earthquakes.munit
 
-import com.raquo.domtestutils.*
 import com.raquo.laminar.api.L.*
 import earthquakes.EarthquakeQueryForm
 import earthquakes.Utils.*
 import earthquakes.model.Earthquake
+import laminar.domtestutils.munit.MUnitSpec
 import org.scalajs.dom.document
 
 class EarthquakeQueryFormTest extends MUnitSpec:

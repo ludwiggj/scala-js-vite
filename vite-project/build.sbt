@@ -43,6 +43,8 @@ lazy val viteProject = project.in(file("."))
     libraryDependencies += "com.raquo" %%% "domtestutils" % "18.0.1" % Test,
     // Scalatest needed for smooth integration with domtestutils
     libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.19" % Test,
+    // Required for SplitVarSpec
+    libraryDependencies += "com.raquo" %%% "ew" % "0.2.0" % Test,
 
     // Compile / mainClass := Some("basic.HelloWorld")
     // Compile / mainClass := Some("basic.Count")

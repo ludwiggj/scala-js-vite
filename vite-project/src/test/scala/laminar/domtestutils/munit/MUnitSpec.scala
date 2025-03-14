@@ -1,7 +1,9 @@
-package com.raquo.domtestutils
+package laminar.domtestutils.munit
 
-import com.raquo.domtestutils.matching.AssertSyntax
-import munit.{BaseFunSuite, FunSuite, Location}
+import com.raquo.domtestutils.MountOps
+import laminar.domtestutils.UnitSpec
+import laminar.domtestutils.matching.AssertSyntax
+import munit.{FunSuite, Location}
 import org.scalactic.Prettifier
 import org.scalactic.source.Position
 

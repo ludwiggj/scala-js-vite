@@ -1,4 +1,4 @@
-package com.raquo.domtestutils.matching
+package laminar.domtestutils.matching
 
 import munit.Assertions.assertEquals
 import munit.Compare.compareSupertypeWithSubtype
