@@ -93,12 +93,14 @@ class EarthquakeQueryForm:
     minMagnitude: String,
     limit: String
   ): EventStream[Either[String, Seq[Earthquake]]] = {
+    // TODO - Adjust ratio
+    // TODO - Caching of results?
     val fetchingEarthquakes = random.nextBoolean()
     val url = if (fetchingEarthquakes)
       s"/earthquake-api?format=geojson&starttime=$startTime&endtime=$endTime&minmagnitude=$minMagnitude&orderby=magnitude&limit=$limit"
     else
       "https://httpstat.us/random/400-426,428-429,431,440,444,449-451,460,463,494-508,510-511,520-527,530,561"
-        
+
     FetchStream.get(
       url = url,
       fetchOptions => fetchOptions.headers(("Accept", "application/json"))
@@ -153,6 +155,7 @@ class EarthquakeQueryForm:
     ),
     p(
       hideIfNoItems, // Hide table if no results!
+      // TODO -  show something else e.g. there are no earthquakes matching that criteria
       label("Result:", fontFamily := "courier"),
       p(
         table(
